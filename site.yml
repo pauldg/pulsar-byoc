@@ -1,0 +1,121 @@
+---
+# Pulsar endpoint with a SLURM or HTCondor cluster behind it.
+# Hosts in the "pulsar" group run Pulsar and the scheduler's controller.
+# Hosts in the "workers" group run jobs. A host can be in both groups.
+
+- name: Check settings
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Check scheduler and connection
+      ansible.builtin.assert:
+        that:
+          - pulsar_scheduler in ['slurm', 'htcondor']
+          - pulsar_connection in ['mq', 'relay']
+          - groups['pulsar'] | length == 1
+          - groups['workers'] | length >= 1
+        fail_msg: Set pulsar_scheduler and pulsar_connection, one host in "pulsar", at least one in "workers".
+
+- name: Common setup
+  hosts: pulsar:workers
+  become: true
+  tasks:
+    - name: Create the Pulsar group
+      ansible.builtin.group:
+        name: "{{ pulsar_user_name }}"
+        gid: "{{ pulsar_user_uid }}"
+        system: true
+
+    - name: Create the Pulsar user with the same uid on every host
+      ansible.builtin.user:
+        name: "{{ pulsar_user_name }}"
+        uid: "{{ pulsar_user_uid }}"
+        group: "{{ pulsar_user_name }}"
+        home: "{{ pulsar_server_dir }}"
+        create_home: false
+        system: true
+        shell: /bin/bash
+
+    - name: Create a munge key for SLURM # noqa: run-once[task]
+      ansible.builtin.command:
+        cmd: dd if=/dev/urandom of={{ slurm_munge_key }} bs=1 count=1024
+        creates: "{{ slurm_munge_key }}"
+      delegate_to: localhost
+      become: false
+      run_once: true
+      when: pulsar_scheduler == 'slurm'
+
+- name: Shared directory on the Pulsar host
+  hosts: pulsar
+  become: true
+  pre_tasks:
+    - name: Create the shared directory
+      ansible.builtin.file:
+        path: "{{ pulsar_shared_dir }}"
+        state: directory
+        owner: "{{ pulsar_user_name }}"
+        group: "{{ pulsar_user_name }}"
+        mode: "0755"
+  roles:
+    - geerlingguy.nfs
+
+- name: Mount the shared directory on the workers
+  hosts: workers:!pulsar
+  become: true
+  tasks:
+    - name: Install the NFS client
+      ansible.builtin.package:
+        name: "{{ 'nfs-common' if ansible_os_family == 'Debian' else 'nfs-utils' }}"
+        state: present
+
+    - name: Mount the shared directory
+      ansible.posix.mount:
+        src: "{{ hostvars[groups['pulsar'][0]].ansible_default_ipv4.address }}:{{ pulsar_shared_dir }}"
+        path: "{{ pulsar_shared_dir }}"
+        fstype: nfs
+        opts: rw,hard,_netdev
+        state: mounted
+
+- name: Job scheduler
+  hosts: pulsar:workers
+  become: true
+  tasks:
+    - name: Install SLURM
+      ansible.builtin.include_role:
+        name: galaxyproject.slurm
+      when: pulsar_scheduler == 'slurm'
+
+    - name: Install HTCondor
+      ansible.builtin.include_role:
+        name: grycap.htcondor
+      when: pulsar_scheduler == 'htcondor'
+
+- name: Software for jobs on the workers
+  hosts: workers
+  become: true
+  tasks:
+    - name: Mount the Galaxy CVMFS repositories
+      ansible.builtin.include_role:
+        name: galaxyproject.cvmfs
+      when: pulsar_cvmfs | bool
+
+    - name: Install Apptainer
+      ansible.builtin.include_role:
+        name: usegalaxy_eu.apptainer
+
+- name: Pulsar
+  hosts: pulsar
+  become: true
+  pre_tasks:
+    - name: Install build dependencies for Pulsar
+      ansible.builtin.package:
+        name: "{{ pulsar_build_packages[ansible_os_family] }}"
+        state: present
+
+    - name: Install the SLURM DRMAA library
+      ansible.builtin.package:
+        name: "{{ pulsar_slurm_drmaa_package[ansible_os_family] }}"
+        state: present
+      when: pulsar_scheduler == 'slurm'
+  roles:
+    - galaxyproject.pulsar

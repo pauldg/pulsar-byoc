@@ -1,0 +1,17 @@
+---
+roles:
+  - src: galaxyproject.pulsar
+    version: 1.0.11
+  - src: galaxyproject.slurm
+    version: 1.0.5
+  - name: grycap.htcondor
+    src: https://github.com/usegalaxy-eu/ansible-htcondor-grycap
+    version: d9a4aab0052dfb31d48c986d39a7f5e3692abba4
+  - src: galaxyproject.cvmfs
+    version: 0.5.2
+  - src: usegalaxy_eu.apptainer
+    version: 0.0.4
+  - src: geerlingguy.nfs
+    version: 2.1.1
+collections:
+  - name: ansible.posix

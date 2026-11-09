@@ -1,0 +1,17 @@
+---
+# slurm or htcondor
+pulsar_scheduler: slurm
+
+# mq (RabbitMQ) or relay (pulsar-relay over HTTPS)
+pulsar_connection: mq
+
+# Shared over NFS from the Pulsar host to the workers
+pulsar_shared_dir: /data/share
+pulsar_nfs_network: 10.0.0.0/24
+
+# Same uid on every host, so jobs on the workers can write to the shared directory
+pulsar_user_name: pulsar
+pulsar_user_uid: 1200
+
+# Mount the Galaxy CVMFS repositories (reference data, containers) on the workers
+pulsar_cvmfs: true
