@@ -4,9 +4,10 @@ roles:
     version: 1.0.11
   - src: galaxyproject.slurm
     version: 1.0.5
+  # Fork with the new HTCondor download host, until the fix is merged upstream
   - name: grycap.htcondor
-    src: https://github.com/usegalaxy-eu/ansible-htcondor-grycap
-    version: d9a4aab0052dfb31d48c986d39a7f5e3692abba4
+    src: https://github.com/pauldg/ansible-role-htcondor
+    version: 4782238e898f0969ad967a350b7cbccbd5fa20f8
   - src: galaxyproject.cvmfs
     version: 0.5.2
   - src: usegalaxy_eu.apptainer
