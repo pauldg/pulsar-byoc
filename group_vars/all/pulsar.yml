@@ -21,20 +21,29 @@ pulsar_optional_dependencies: >-
      + (['kombu', 'pyOpenSSL'] if pulsar_connection == 'mq' else ['pulsar-relay-client==0.2.1'])
      + (['drmaa'] if pulsar_scheduler == 'slurm' else []) }}
 
+# usegalaxy.eu's MQ runners use the manager "production", its relay runners the default one
+pulsar_manager_name: "{{ 'production' if pulsar_connection == 'mq' else '_default_' }}"
+
+# Relay settings after applying the central or own placement
+pulsar_relay_url_final: >-
+  {{ pulsar_relay_central_url if pulsar_relay_placement == 'central' else pulsar_relay_url }}
+pulsar_relay_username_final: >-
+  {{ 'byoc_' ~ pulsar_galaxy_user_id if pulsar_relay_placement == 'central' else pulsar_relay_username }}
+
 pulsar_yaml_config: >-
   {{ pulsar_base_config | combine(pulsar_relay_config if pulsar_connection == 'relay' else {}) }}
 
 pulsar_base_config:
-  message_queue_url: "{{ pulsar_message_queue_url }}"
+  message_queue_url: >-
+    {{ pulsar_relay_url_final if pulsar_connection == 'relay' else pulsar_message_queue_url }}
   min_polling_interval: 0.5
   conda_auto_init: false
   conda_auto_install: false
-  managers:
-    _default_: "{{ pulsar_managers[pulsar_scheduler] | combine(pulsar_staging_retries) }}"
+  managers: "{{ {pulsar_manager_name: pulsar_managers[pulsar_scheduler] | combine(pulsar_staging_retries)} }}"
 
 # An https:// message_queue_url switches Pulsar to relay mode
 pulsar_relay_config:
-  message_queue_username: "{{ pulsar_relay_username }}"
+  message_queue_username: "{{ pulsar_relay_username_final }}"
   message_queue_password: "{{ pulsar_relay_password }}"
   relay_topic_prefix: "{{ pulsar_relay_topic_prefix }}"
 
@@ -63,3 +72,9 @@ pulsar_build_packages:
 pulsar_slurm_drmaa_package:
   Debian: slurm-drmaa1
 pulsar_drmaa_library_path: /usr/lib/slurm-drmaa/lib/libdrmaa.so.1
+
+# Pulsar posts here once it is connected to the relay
+pulsar_relay_capabilities_topic: >-
+  {{ (pulsar_relay_topic_prefix ~ '_' if pulsar_relay_topic_prefix else '')
+     ~ 'pulsar_capabilities'
+     ~ ('' if pulsar_manager_name == '_default_' else '_' ~ pulsar_manager_name) }}

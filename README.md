@@ -23,15 +23,29 @@ Two variables choose the setup:
 - `pulsar_scheduler`: `slurm` or `htcondor`
 - `pulsar_connection`: `mq` or `relay`
 
+With the relay, `pulsar_relay_placement` chooses which relay to use:
+
+- `central` (default) uses usegalaxy.eu's relay at `stargate.galaxyproject.eu`. The account is `byoc_<id>`, where `<id>` is the user's encoded Galaxy user id (`pulsar_galaxy_user_id`, shown by `/api/users/current`). The user chooses the password. usegalaxy.eu creates the account after it merges the user's BYOC PR.
+- `own` uses a relay the user runs, for example the [SURF Research Cloud relay component](https://github.com/mirelaminkova/pulsar-relay-src). Set `pulsar_relay_url`, `pulsar_relay_username` and `pulsar_relay_password`.
+
+The Pulsar job manager is called `production` for RabbitMQ and `_default_` for the relay. These are the names usegalaxy.eu's runners expect. Override `pulsar_manager_name` for another Galaxy.
+
 A host can be in both the `pulsar` and `workers` groups. That gives a single-VM endpoint for testing.
+
+## Connection summary
+
+At the end of the run the playbook writes `/opt/pulsar/byoc-connection.yml` on the Pulsar host and prints it. It lists the values the user enters in the usegalaxy.eu BYOC form (*User > Preferences > Manage information > byoc_pulsar*): the transport, the relay or RabbitMQ account, the staging directory and the CPU and memory limits of the largest worker. It holds no passwords. A provider such as SimpleVM can show this file to the user.
+
+With the relay, the playbook also checks that Pulsar has connected. It signs in to the relay and waits for Pulsar's capability topic (`pulsar_capabilities`). On the central relay this only works after usegalaxy.eu has created the account, so a first run reports "relay login failed" in the summary instead of stopping. Run the playbook again after the PR is merged to confirm the connection.
 
 ## Usage
 
 ```bash
 ansible-galaxy install -r requirements.yml
 cp inventory.example.ini inventory.ini        # add your hosts
-cp secrets.example.yml secrets.yml            # add the queue URL and passwords
-ansible-playbook site.yml -e @secrets.yml -e pulsar_scheduler=htcondor -e pulsar_connection=relay
+cp secrets.example.yml secrets.yml            # add the queue URL or relay password
+ansible-playbook site.yml -e @secrets.yml -e pulsar_scheduler=htcondor \
+  -e pulsar_connection=relay -e pulsar_galaxy_user_id=YOUR_ENCODED_ID
 ```
 
 Set `pulsar_nfs_network` to the subnet of your hosts. The other defaults are in `group_vars/all/`, one file for each topic.
@@ -69,3 +83,5 @@ For RabbitMQ, use `amqp_url` on the runner instead of the `relay_*` settings. Pu
 - SLURM on EL needs a `slurm-drmaa` package source. Only Ubuntu is covered now.
 - HTCondor uses a shared pool password. Tokens would be better for a multi-site setup.
 - Pulsar and relay client versions follow the ones usegalaxy.eu runs against the relay.
+- The connection check covers the relay only. There is no check for RabbitMQ yet.
+- The summary field names follow the BYOC form on Mirela Minkova's `byoc-variant2-relay` branch of the usegalaxy.eu playbook. They change if that form changes.
