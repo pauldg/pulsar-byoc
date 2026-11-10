@@ -80,7 +80,7 @@ For RabbitMQ, use `amqp_url` on the runner instead of the `relay_*` settings. Pu
 
 - Not tested yet. The first test target is Ubuntu 22.04 on SURF Research Cloud.
 - `grycap.htcondor` lists Ubuntu 20.04 and 22.04 and EL. Ubuntu 24.04 is untested.
-- SLURM on EL needs a `slurm-drmaa` package source. Only Ubuntu is covered now.
+- SLURM on EL takes `slurm-drmaa` from the Galaxy depot. Only Ubuntu has been tested.
 - HTCondor uses a shared pool password. Tokens would be better for a multi-site setup.
 - Pulsar and relay client versions follow the ones usegalaxy.eu runs against the relay.
 - The connection check covers the relay only. There is no check for RabbitMQ yet.

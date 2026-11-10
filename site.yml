@@ -143,6 +143,11 @@
         name: "{{ pulsar_build_packages[ansible_os_family] }}"
         state: present
 
+    - name: Add the package source for the SLURM DRMAA library
+      ansible.builtin.include_role:
+        name: galaxyproject.repos
+      when: pulsar_scheduler == 'slurm'
+
     - name: Install the SLURM DRMAA library
       ansible.builtin.package:
         name: "{{ pulsar_slurm_drmaa_package[ansible_os_family] }}"

@@ -68,10 +68,12 @@ pulsar_build_packages:
   Debian: [build-essential, python3-venv, python3-dev, libcurl4-gnutls-dev, libgnutls28-dev]
   RedHat: [gcc, python3-devel, libcurl-devel, openssl-devel]
 
-# No EL package yet, see README
+# From the Galaxy PPA (Ubuntu) or depot (EL), added by galaxyproject.repos
 pulsar_slurm_drmaa_package:
   Debian: slurm-drmaa1
-pulsar_drmaa_library_path: /usr/lib/slurm-drmaa/lib/libdrmaa.so.1
+  RedHat: slurm-drmaa
+pulsar_drmaa_library_path: >-
+  {{ '/usr/lib/slurm-drmaa/lib/libdrmaa.so.1' if ansible_os_family == 'Debian' else '/usr/lib64/libdrmaa.so.1' }}
 
 # Pulsar posts here once it is connected to the relay
 pulsar_relay_capabilities_topic: >-
