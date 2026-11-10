@@ -1,8 +1,6 @@
 ---
 # Variables for grycap.htcondor, built from the inventory
-# Version picks the signing key, channel the package repository: keep them equal
 htcondor_version: "25.0"
-htcondor_channel: "25.0"
 htcondor_server: "{{ hostvars[groups['pulsar'][0]].ansible_default_ipv4.address }}"
 htcondor_type_of_node: "{{ 'front' if inventory_hostname in groups['pulsar'] else 'wn' }}"
 htcondor_role_manager: "{{ inventory_hostname in groups['pulsar'] }}"
