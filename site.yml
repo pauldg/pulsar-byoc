@@ -155,6 +155,11 @@
       when: pulsar_scheduler == 'slurm'
   roles:
     - galaxyproject.pulsar
+  handlers:
+    - name: Restart Pulsar
+      ansible.builtin.systemd:
+        name: "{{ pulsar_systemd_service_name }}.service"
+        state: restarted
   post_tasks:
     - name: Apply Pulsar config changes before checking the connection
       ansible.builtin.meta: flush_handlers
