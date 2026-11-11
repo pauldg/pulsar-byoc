@@ -1,6 +1,6 @@
 # BioHackathon 2026 test deployments
 
-This branch records what we deployed on SURF Research Cloud and de.NBI SimpleVM during the ELIXIR BioHackathon Europe 2026. Both ran the playbook at commit `b33f972` on a single Ubuntu 22.04 VM that is both the Pulsar host and the worker, with SLURM as the scheduler. Addresses, usernames and secrets are placeholders.
+This folder records what we deployed on SURF Research Cloud and de.NBI SimpleVM during the ELIXIR BioHackathon Europe 2026. Both ran the playbook at commit `b33f972` on a single Ubuntu 22.04 VM that is both the Pulsar host and the worker, with SLURM as the scheduler. Addresses, usernames and secrets are placeholders.
 
 Both VMs used placeholder message queue addresses (`relay.invalid`, `mq.invalid`), so every install step ran but Pulsar did not connect to a Galaxy. The connection to test.usegalaxy.be over RabbitMQ is the next step.
 
