@@ -110,6 +110,7 @@ Pulsar must be able to reach `galaxy_url` over HTTPS in both cases, because file
 ## Open points
 
 - HTCondor installs with the fixed role but has not run a job yet.
+- The playbook sets `net.ipv4.tcp_mtu_probing=1`. On SURF Research Cloud (MTU 8950), uploads to test.usegalaxy.be stalled without it, because ICMP "fragmentation needed" messages did not come back on that path.
 - The connection to a real Galaxy, over RabbitMQ or the relay, has not been tested yet.
 - A relay on the same VM as Pulsar (as on SURF Research Cloud, where there is no central relay) is not a placement option yet.
 - `grycap.htcondor` lists Ubuntu 20.04 and 22.04 and EL. Ubuntu 24.04 is untested.

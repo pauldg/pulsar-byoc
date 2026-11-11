@@ -44,6 +44,14 @@
   hosts: pulsar:workers
   become: true
   tasks:
+    # Large uploads to Galaxy stall when a path drops ICMP "fragmentation needed"
+    # (seen from SURF Research Cloud, MTU 8950, to test.usegalaxy.be)
+    - name: Let TCP detect MTU black holes
+      ansible.posix.sysctl:
+        name: net.ipv4.tcp_mtu_probing
+        value: "1"
+        sysctl_file: /etc/sysctl.d/90-pulsar-byoc.conf
+
     - name: Create the Pulsar group
       ansible.builtin.group:
         name: "{{ pulsar_user_name }}"
