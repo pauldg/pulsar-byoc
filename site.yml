@@ -36,8 +36,8 @@
     - name: Check the RabbitMQ settings
       ansible.builtin.assert:
         that:
-          - pulsar_message_queue_url is match('^amqps?://[^:@/]+:[^@]+@')
-        fail_msg: Set pulsar_message_queue_url to amqps://USER:PASSWORD@HOST:PORT//VHOST.
+          - pulsar_message_queue_url is match('^(py)?amqps?://[^:@/]+:[^@]+@')
+        fail_msg: Set pulsar_message_queue_url to pyamqp://USER:PASSWORD@HOST:PORT//VHOST?ssl=1.
       when: pulsar_connection == 'mq'
 
 - name: Common setup
